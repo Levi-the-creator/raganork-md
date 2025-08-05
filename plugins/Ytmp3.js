@@ -1,42 +1,30 @@
-
 const ytdl = require("ytdl-core");
-const yts = require("yt-search");
+const ytSearch = require("yt-search");
 
-command(
-  {
-    pattern: "ytmp3",
-    fromMe: false,
-    desc: "Download YouTube audio without cookies (public videos only)",
-    type: "downloader",
-  },
-  async (message, match, m) => {
-    try {
-      if (!match) return await message.sendReply("Send a YouTube URL or search query.");
-
-      let videoUrl = match;
-
-      // Validate URL or search YouTube
-      if (!ytdl.validateURL(videoUrl)) {
-        const search = await yts(match);
-        if (!search.videos.length) return await message.sendReply("No results found.");
-        videoUrl = search.videos[0].url;
-      }
-
-      // Get audio stream without cookies
-      const audioStream = ytdl(videoUrl, {
-        filter: "audioonly",
-        quality: "highestaudio",
-      });
-
-      // Send audio as voice note or audio file
-      await message.sendMessage(
-        { audio: audioStream, mimetype: "audio/mpeg" },
-        { quoted: message.data }
-      );
-    } catch (error) {
-      console.error("Error in ytmp3 command:", error);
-      await message.sendReply(`❌ Error: ${error.message || error}`);
+module.exports = {
+  name: "ytmp3",
+  command: ["ytmp3"],
+  async run(message, args) {
+    if (!args || args.length === 0) {
+      return message.reply("❌ Provide a YouTube search term or link.");
     }
-  }
-);
 
+    const query = args.join(" ");
+
+    try {
+      const result = await ytSearch(query);
+      const video = result.videos[0];
+      if (!video) return message.reply("❌ No video found.");
+
+      const stream = ytdl(video.url, { filter: "audioonly" });
+
+      await message.sendMessage({ stream }, "audio", {
+        mimetype: "audio/mp4",
+        ptt: false,
+      });
+    } catch (err) {
+      console.error("ytmp3 plugin error:", err);
+      message.reply("❌ Plugin error: " + err.message);
+    }
+  },
+};
