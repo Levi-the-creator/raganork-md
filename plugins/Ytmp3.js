@@ -1,4 +1,4 @@
-const { command } = require("../../lib/");
+
 const ytdl = require("ytdl-core");
 const yts = require("yt-search");
 
@@ -39,3 +39,4 @@ command(
     }
   }
 );
+
